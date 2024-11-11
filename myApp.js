@@ -1,62 +1,161 @@
-require('dotenv').config();
+require("dotenv").config();
+const mongoose = require("mongoose");
 
+// Definisikan skema untuk model Person
+const personSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  age: Number,
+  favoriteFoods: [String],
+});
 
-let Person;
+// Buat model Person
+const Person = mongoose.model("Person", personSchema);
 
-const createAndSavePerson = (done) => {
-  done(null /*, data*/);
+// Fungsi untuk menyimpan orang baru
+const createAndSavePerson = async () => {
+  const person = new Person({
+    name: "Bill",
+    age: 5,
+    favoriteFoods: ["Chicken"],
+  });
+  return await person.save();
 };
 
-const createManyPeople = (arrayOfPeople, done) => {
-  done(null /*, data*/);
+// Fungsi untuk menyimpan banyak orang
+const createManyPeople = async (arrayOfPeople) => {
+  try {
+    const people = await Person.insertMany(arrayOfPeople);
+    return people;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const findPeopleByName = (personName, done) => {
-  done(null /*, data*/);
+// Fungsi untuk mencari orang berdasarkan nama
+const findPeopleByName = async (personName) => {
+  try {
+    const people = await Person.find({ name: personName });
+    return people;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const findOneByFood = (food, done) => {
-  done(null /*, data*/);
+// Fungsi untuk mencari satu orang berdasarkan makanan favorit
+const findOneByFood = async (food) => {
+  try {
+    const person = await Person.findOne({ favoriteFoods: food });
+    return person;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const findPersonById = (personId, done) => {
-  done(null /*, data*/);
+// Fungsi untuk mencari orang berdasarkan ID
+const findPersonById = async (personId) => {
+  try {
+    const person = await Person.findById(personId);
+    if (!person) {
+      throw new Error("Person not found");
+    }
+    return person;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const findEditThenSave = (personId, done) => {
+// Fungsi untuk menambahkan makanan favorit dan menyimpan perubahan
+const findEditThenSave = async (personId) => {
   const foodToAdd = "hamburger";
-
-  done(null /*, data*/);
+  try {
+    const person = await Person.findById(personId);
+    if (!person) {
+      throw new Error("Person not found");
+    }
+    person.favoriteFoods.push(foodToAdd);
+    const updatedPerson = await person.save();
+    return updatedPerson;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const findAndUpdate = (personName, done) => {
+// Fungsi untuk memperbarui usia seseorang berdasarkan nama
+const findAndUpdate = async (personName) => {
   const ageToSet = 20;
-
-  done(null /*, data*/);
+  try {
+    const updatedPerson = await Person.findOneAndUpdate(
+      { name: personName },
+      { age: ageToSet },
+      { new: true }
+    );
+    return updatedPerson;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const removeById = (personId, done) => {
-  done(null /*, data*/);
+// Fungsi untuk menghapus orang berdasarkan ID
+const removeById = async (personId) => {
+  try {
+    const result = await Person.findByIdAndDelete(personId);
+    return result;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const removeManyPeople = (done) => {
-  const nameToRemove = "Mary";
-
-  done(null /*, data*/);
+// Fungsi untuk menghapus banyak orang
+const removeManyPeople = async () => {
+  const namesToRemove = "Mary"; // Menggunakan string jika hanya satu nama
+  try {
+    const result = await Person.deleteMany({ name: namesToRemove });
+    console.log(`Deleted: ${result.deletedCount} person(s)`);
+    return result;
+  } catch (err) {
+    throw err;
+  }
 };
 
-const queryChain = (done) => {
+// Fungsi untuk melakukan query dengan chaining
+const queryChain = async () => {
   const foodToSearch = "burrito";
-
-  done(null /*, data*/);
+  try {
+    const data = await Person.find({ favoriteFoods: foodToSearch })
+      .sort("name")
+      .limit(2)
+      .select(["name", "favoriteFoods"])
+      .exec();
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 };
 
-/** **Well Done !!**
-/* You completed these challenges, let's go celebrate !
- */
+// Fungsi utama untuk menghubungkan ke database dan melakukan operasi
+async function startApp() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Connection success!");
 
-//----- **DO NOT EDIT BELOW THIS LINE** ----------------------------------
+    // Contoh memanggil fungsi untuk menyimpan orang
+    const savedPerson = await createAndSavePerson();
+    console.log("Saved person:", savedPerson);
 
+    // Panggil fungsi lainnya sesuai kebutuhan
+  } catch (err) {
+    console.error("Connection error:", err);
+  }
+}
+
+// Jalankan aplikasi
+startApp();
+
+// Ekspor fungsi untuk digunakan di tempat lain
 exports.PersonModel = Person;
 exports.createAndSavePerson = createAndSavePerson;
 exports.findPeopleByName = findPeopleByName;
